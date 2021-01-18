@@ -206,3 +206,17 @@ docker_pull() {
   printf "\n${RED}Failed to pull image %s.${NC}" "$1"
   return 1
 }
+
+check_tags() {
+  local repository="$1"
+  local additional_tag_names="$2"
+
+  for container_tag in ${additional_tag_names}; do
+    if docker manifest inspect "${repository}:${container_tag}" > /dev/null; then
+      echo "${container_tag}"
+      break
+    fi
+  done
+
+  echo ""
+}
