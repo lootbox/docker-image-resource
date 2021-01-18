@@ -20,26 +20,26 @@ PATH=/usr/local/bin:$PATH
 
 payload=$(mktemp /tmp/resource-in.XXXXXX)
 
-cat >$payload <&0
+cat > $payload <&0
 
 cd $source
 
-insecure_registries=$(jq -r '.source.insecure_registries // [] | join(" ")' <$payload)
-registry_mirror=$(jq -r '.source.registry_mirror // ""' <$payload)
+insecure_registries=$(jq -r '.source.insecure_registries // [] | join(" ")' < $payload)
+registry_mirror=$(jq -r '.source.registry_mirror // ""' < $payload)
 
-username=$(jq -r '.source.username // ""' <$payload)
-password=$(jq -r '.source.password // ""' <$payload)
-repository=$(jq -r '.source.repository // ""' <$payload)
-ca_certs=$(jq -r '.source.ca_certs // []' <$payload)
-client_certs=$(jq -r '.source.client_certs // []' <$payload)
-max_concurrent_downloads=$(jq -r '.source.max_concurrent_downloads // 3' <$payload)
-max_concurrent_uploads=$(jq -r '.source.max_concurrent_uploads // 3' <$payload)
+username=$(jq -r '.source.username // ""' < $payload)
+password=$(jq -r '.source.password // ""' < $payload)
+repository=$(jq -r '.source.repository // ""' < $payload)
+ca_certs=$(jq -r '.source.ca_certs // []' < $payload)
+client_certs=$(jq -r '.source.client_certs // []' < $payload)
+max_concurrent_downloads=$(jq -r '.source.max_concurrent_downloads // 3' < $payload)
+max_concurrent_uploads=$(jq -r '.source.max_concurrent_uploads // 3' < $payload)
 
-export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' <$payload)
-export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' <$payload)
-export AWS_SESSION_TOKEN=$(jq -r '.source.aws_session_token // ""' <$payload)
+export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' < $payload)
+export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
+export AWS_SESSION_TOKEN=$(jq -r '.source.aws_session_token // ""' < $payload)
 
-if private_registry "${repository}"; then
+if private_registry "${repository}" ; then
   registry="$(extract_registry "${repository}")"
 else
   registry=
@@ -48,25 +48,25 @@ fi
 certs_to_file "$ca_certs"
 set_client_certs "$client_certs"
 start_docker \
-  "${max_concurrent_downloads}" \
-  "${max_concurrent_uploads}" \
-  "$insecure_registries" \
-  "$registry_mirror"
+	"${max_concurrent_downloads}" \
+	"${max_concurrent_uploads}" \
+	"$insecure_registries" \
+	"$registry_mirror"
 log_in "$username" "$password" "$registry"
 
-tag_source=$(jq -r '.source.tag // "latest"' <$payload)
-tag_params=$(jq -r '.params.tag_file // ""' <$payload)
+tag_source=$(jq -r '.source.tag // "latest"' < $payload)
+tag_params=$(jq -r '.params.tag_file // ""' < $payload)
 # for backwards compatibility, check `tag` if `tag_file` is empty
 if [ -z "$tag_params" ]; then
-  tag_params=$(jq -r '.params.tag // ""' <$payload)
+  tag_params=$(jq -r '.params.tag // ""' < $payload)
 fi
-tag_prefix=$(jq -r '.params.tag_prefix // ""' <$payload)
-additional_tags=$(jq -r '.params.additional_tags // ""' <$payload)
-need_tag_as_latest=$(jq -r '.params.tag_as_latest // "false"' <$payload)
-build_args=$(jq -r '.params.build_args // {}' <$payload)
-build_args_file=$(jq -r '.params.build_args_file // ""' <$payload)
-labels=$(jq -r '.params.labels // {}' <$payload)
-labels_file=$(jq -r '.params.labels_file // ""' <$payload)
+tag_prefix=$(jq -r '.params.tag_prefix // ""' < $payload)
+additional_tags=$(jq -r '.params.additional_tags // ""' < $payload)
+need_tag_as_latest=$(jq -r '.params.tag_as_latest // "false"' < $payload)
+build_args=$(jq -r '.params.build_args // {}' < $payload)
+build_args_file=$(jq -r '.params.build_args_file // ""' < $payload)
+labels=$(jq -r '.params.labels // {}' < $payload)
+labels_file=$(jq -r '.params.labels_file // ""' < $payload)
 
 build_once=$(jq -r '.params.build_once // "false"' <$payload)
 first_found_tag=""
@@ -91,7 +91,7 @@ if [ -n "$additional_tags" ]; then
   additional_tag_names="$(cat $additional_tags)"
 
   if [ "${build_once}" = "true" ]; then
-    first_found_tag="$(check_tags "${repository}" "${additional_tag_names}")"
+    first_found_tag=$(check_tags "${repository}" "${additional_tag_names}")
   fi
 fi
 
@@ -100,25 +100,25 @@ if [ -z "$repository" ]; then
   exit 1
 fi
 
-load=$(jq -r '.params.load // ""' <$payload)
+load=$(jq -r '.params.load // ""' < $payload)
 
-load_base=$(jq -r '.params.load_base // ""' <$payload)
-load_bases=$(jq -r '.params.load_bases // empty' <$payload)
-build=$(jq -r '.params.build // ""' <$payload)
-cache=$(jq -r '.params.cache' <$payload)
-cache_tag=$(jq -r ".params.cache_tag // \"${tag_name}\"" <$payload)
-cache_from=$(jq -r '.params.cache_from // empty' <$payload)
-dockerfile=$(jq -r ".params.dockerfile // \"${build}/Dockerfile\"" <$payload)
+load_base=$(jq -r '.params.load_base // ""' < $payload)
+load_bases=$(jq -r '.params.load_bases // empty' < $payload)
+build=$(jq -r '.params.build // ""' < $payload)
+cache=$(jq -r '.params.cache' < $payload)
+cache_tag=$(jq -r ".params.cache_tag // \"${tag_name}\"" < $payload)
+cache_from=$(jq -r '.params.cache_from // empty' < $payload)
+dockerfile=$(jq -r ".params.dockerfile // \"${build}/Dockerfile\"" < $payload)
 
-load_file=$(jq -r '.params.load_file // ""' <$payload)
-load_repository=$(jq -r '.params.load_repository // ""' <$payload)
-load_tag=$(jq -r '.params.load_tag // "latest"' <$payload)
+load_file=$(jq -r '.params.load_file // ""' < $payload)
+load_repository=$(jq -r '.params.load_repository // ""' < $payload)
+load_tag=$(jq -r '.params.load_tag // "latest"' < $payload)
 
-import_file=$(jq -r '.params.import_file // ""' <$payload)
+import_file=$(jq -r '.params.import_file // ""' < $payload)
 
-pull_repository=$(jq -r '.params.pull_repository // ""' <$payload)
-pull_tag=$(jq -r '.params.pull_tag // "latest"' <$payload)
-target_name=$(jq -r '.params.target_name // ""' <$payload)
+pull_repository=$(jq -r '.params.pull_repository // ""' < $payload)
+pull_tag=$(jq -r '.params.pull_tag // "latest"' < $payload)
+target_name=$(jq -r '.params.target_name // ""' < $payload)
 
 if [ -n "$load" ]; then
   docker load -i "${load}/image"
@@ -171,7 +171,7 @@ elif [ -n "$build" ]; then
   expanded_build_args=()
 
   # propagate proxy settings to image builder
-  for proxy_var in http_proxy https_proxy no_proxy; do
+  for proxy_var in http_proxy https_proxy no_proxy ; do
     if [ -n "${!proxy_var:-}" ]; then
       expanded_build_args+=("--build-arg")
       expanded_build_args+=("${proxy_var}=${!proxy_var}")
@@ -231,15 +231,16 @@ elif [ -n "$build" ]; then
 
   target=()
   if [ -n "${target_name}" ]; then
-    target+=("--target")
-    target+=("${target_name}")
+   target+=("--target")
+   target+=("${target_name}")
   fi
 
   ECR_REGISTRY_PATTERN='/[a-zA-Z0-9][a-zA-Z0-9_-]*\.dkr\.ecr\.[a-zA-Z0-9][a-zA-Z0-9_-]*\.amazonaws\.com(\.cn)?[^ ]*/'
-  ecr_images=$(egrep '^\s*FROM|^\s*ARG' ${dockerfile} |
-    awk "match(\$0,${ECR_REGISTRY_PATTERN}){print substr(\$0, RSTART, RLENGTH)}")
+  ecr_images=$(egrep '^\s*FROM|^\s*ARG' ${dockerfile} | \
+             awk "match(\$0,${ECR_REGISTRY_PATTERN}){print substr(\$0, RSTART, RLENGTH)}" )
   if [ -n "$ecr_images" ]; then
-    for ecr_image in $ecr_images; do
+    for ecr_image in $ecr_images
+    do
       # pull will perform an authentication process needed for ECR
       # there is an experimental endpoint to support long running sessions
       # docker cli does not support it yet though
@@ -251,10 +252,12 @@ elif [ -n "$build" ]; then
 
   if [ "${build_once}" = "true" ]; then
     if [ -z "${first_found_tag}" ]; then
-      echo "Container with ${tag_name} was NOT FOUND in the repository. Building..."
+      echo "Container was NOT FOUND in the repository. Building..."
       docker build -t "${repository}:${tag_name}" "${target[@]}" "${expanded_build_args[@]}" "${expanded_labels[@]}" -f "$dockerfile" $cache_from "$build"
     else
-      echo "Container with tag ${first_found_tag} was FOUND in the repository. Build skipped."
+      echo "Container with tag ${first_found_tag} was FOUND in the repository. Build skipped. Pulling..."
+      docker pull "${repository}:${first_found_tag}"
+      docker tag "${repository}:${first_found_tag}" "${repository}:${tag_name}"
     fi
   else
     docker build -t "${repository}:${tag_name}" "${target[@]}" "${expanded_build_args[@]}" "${expanded_labels[@]}" -f "$dockerfile" $cache_from "$build"
@@ -289,39 +292,35 @@ image_id="$(image_from_tag "$repository" "$tag_name")"
 
 # careful to not let 'tee' mask exit status
 
-# if first_found_tag is empty, then container
-# was built. Otherwise build was skipped.
-if [ "${build_once}" = "true" ] && [ -n "${first_found_tag}" ] || [ "${build_once}" = "false" ]; then
-  {
-    if ! docker push "${repository}:${tag_name}"; then
-      touch /tmp/push-failed
-    fi
-  } | tee push-output
-
-  if [ -e /tmp/push-failed ]; then
-    exit 1
+{
+  if ! docker push "${repository}:${tag_name}"; then
+    touch /tmp/push-failed
   fi
+} | tee push-output
 
-  digest="$(grep 'digest' push-output | awk '{print $3}')"
+if [ -e /tmp/push-failed ]; then
+  exit 1
+fi
 
-  if [ "$need_tag_as_latest" = "true" ] && [ "${tag_name}" != "latest" ]; then
-    docker tag "${repository}:${tag_name}" "${repository}:latest"
-    docker push "${repository}:latest"
-    echo "${repository}:${tag_name} tagged as latest"
-  fi
+digest="$(grep 'digest' push-output | awk '{print $3}')"
 
-  if [ -n "$additional_tag_names" ]; then
-    for additional_tag in $additional_tag_names; do
-      docker tag "${repository}:${tag_name}" "${repository}:${additional_tag}"
-      docker push "${repository}:${additional_tag}"
-      echo "${repository}:${tag_name} tagged as ${additional_tag}"
-    done
-  fi
+if [ "$need_tag_as_latest" = "true" ] && [ "${tag_name}" != "latest"  ]; then
+  docker tag "${repository}:${tag_name}" "${repository}:latest"
+  docker push "${repository}:latest"
+  echo "${repository}:${tag_name} tagged as latest"
+fi
+
+if [ -n "$additional_tag_names" ]    ; then
+  for additional_tag in $additional_tag_names; do
+    docker tag "${repository}:${tag_name}" "${repository}:${additional_tag}"
+    docker push "${repository}:${additional_tag}"
+    echo "${repository}:${tag_name} tagged as ${additional_tag}"
+  done
 fi
 
 jq -n "{
   version: {
-    digest: $(echo "${digest:-""}" | jq -R .)
+    digest: $(echo $digest | jq -R .)
   },
   metadata: [
     { name: \"image\", value: $(echo $image_id | head -c 12 | jq -R .) }

@@ -4,7 +4,7 @@ STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-120}
 
 sanitize_cgroups() {
   mkdir -p /sys/fs/cgroup
-  mountpoint -q /sys/fs/cgroup || \
+  mountpoint -q /sys/fs/cgroup ||
     mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
 
   mount -o remount,rw /sys/fs/cgroup
@@ -60,7 +60,7 @@ start_docker() {
     fi
   fi
 
-  local mtu=$(cat /sys/class/net/$(ip route get 8.8.8.8|awk '{ print $5 }')/mtu)
+  local mtu=$(cat /sys/class/net/$(ip route get 8.8.8.8 | awk '{ print $5 }')/mtu)
   local server_args="--mtu ${mtu}"
   local registry=""
 
@@ -76,7 +76,7 @@ start_docker() {
 
   try_start() {
     dockerd --data-root /scratch/docker ${server_args} >$LOG_FILE 2>&1 &
-    echo $! > /tmp/docker.pid
+    echo $! >/tmp/docker.pid
 
     sleep 1
 
@@ -117,7 +117,7 @@ log_in() {
     echo "${password}" | docker login -u "${username}" --password-stdin ${registry}
   else
     mkdir -p ~/.docker
-    echo '{"credsStore":"ecr-login"}' >> ~/.docker/config.json
+    echo '{"credsStore":"ecr-login", "experimental": "enabled"}' >>~/.docker/config.json
   fi
 }
 
@@ -125,7 +125,7 @@ private_registry() {
   local repository="${1}"
 
   local registry="$(extract_registry "${repository}")"
-  if echo "${registry}" | grep -q -x '.*[.:].*' ; then
+  if echo "${registry}" | grep -q -x '.*[.:].*'; then
     return 0
   fi
 
@@ -156,11 +156,10 @@ certs_to_file() {
   local raw_ca_certs="${1}"
   local cert_count="$(echo $raw_ca_certs | jq -r '. | length')"
 
-  for i in $(seq 0 $(expr "$cert_count" - 1));
-  do
+  for i in $(seq 0 $(expr "$cert_count" - 1)); do
     local cert_dir="/etc/docker/certs.d/$(echo $raw_ca_certs | jq -r .[$i].domain)"
     mkdir -p "$cert_dir"
-    echo $raw_ca_certs | jq -r .[$i].cert >> "${cert_dir}/ca.crt"
+    echo $raw_ca_certs | jq -r .[$i].cert >>"${cert_dir}/ca.crt"
   done
 }
 
@@ -168,12 +167,11 @@ set_client_certs() {
   local raw_client_certs="${1}"
   local cert_count="$(echo $raw_client_certs | jq -r '. | length')"
 
-  for i in $(seq 0 $(expr "$cert_count" - 1));
-  do
+  for i in $(seq 0 $(expr "$cert_count" - 1)); do
     local cert_dir="/etc/docker/certs.d/$(echo $raw_client_certs | jq -r .[$i].domain)"
     [ -d "$cert_dir" ] || mkdir -p "$cert_dir"
-    echo $raw_client_certs | jq -r .[$i].cert >> "${cert_dir}/client.cert"
-    echo $raw_client_certs | jq -r .[$i].key >> "${cert_dir}/client.key"
+    echo $raw_client_certs | jq -r .[$i].cert >>"${cert_dir}/client.cert"
+    echo $raw_client_certs | jq -r .[$i].key >>"${cert_dir}/client.key"
   done
 }
 
@@ -208,13 +206,16 @@ docker_pull() {
 }
 
 check_tags() {
-  local repository="$1"
-  local additional_tag_names="$2"
+  local repository="${1}"
+  local additional_tag_names="${2}"
 
   for container_tag in ${additional_tag_names}; do
-    if docker manifest inspect "${repository}:${container_tag}" > /dev/null; then
-      echo "${container_tag}"
-      break
+    if [ -n "${container_tag}" ]; then
+      check=$(docker manifest inspect "${repository}:${container_tag}")
+      if [ -n "${check}" ]; then
+        echo "${container_tag}"
+        break
+      fi
     fi
   done
 
